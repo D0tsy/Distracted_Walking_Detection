@@ -160,3 +160,8 @@ Example parameters include
 - Ultralytics YOLO
 - NumPy
 - Supervision
+
+---
+## System requirements
+
+- Nvidia GPU
