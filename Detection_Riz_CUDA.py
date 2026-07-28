@@ -6,7 +6,7 @@ import torch
 from collections import deque
 import supervision as sv
 from ultralytics import YOLO
-from rfdetr import RFDETRLarge          # swap for RFDETRLarge if that's what you trained
+from rfdetr import RFDETRLarge
 from rfdetr.util.coco_classes import COCO_CLASSES
 
 # ============================================================
@@ -42,24 +42,11 @@ WALKING_HISTORY_FRAMES = 10
 
 
 VIDEO_SOURCE = 'vid1.mp4'   # 0 = default laptop webcam. Set to a filename string (e.g. 'Vid23.mp4') to read a video file instead.
-                    # If 0 isn't your laptop's built-in camera (e.g. an external webcam grabs index 0 instead),
-                    # try 1, 2, etc.
 
 # --- Model Image Size Resolution ---
 POSE_IMGSZ = 640
-PHONE_RES  = 864   # RF-DETR resolution must be a multiple of 56; 864 = 56*15.43 -> round to nearest valid size below
+PHONE_RES  = 864  
 
-# RF-DETR resolutions must be divisible by 56. 864 isn't, so we snap it to the
-# nearest valid value here rather than silently failing at model init.
-#if PHONE_RES % 56 != 0:
-#    _snapped = round(PHONE_RES / 56) * 56
-#    print(f"[WARN] PHONE_RES={PHONE_RES} is not a multiple of 56 (RF-DETR requirement). "
-#          f"Snapping to {_snapped}.")
-#    PHONE_RES = _snapped
-
-# Path to your custom-trained RF-DETR checkpoint (the .pth you originally
-# exported to the OpenVINO IR at rfdetr_openvino_864/rfdetr.xml).
-# If you were just using stock COCO weights, leave this as None.
 RFDETR_CHECKPOINT = None  # e.g. "weights/rfdetr_phone.pth"
 
 # ============================================================
@@ -163,8 +150,6 @@ def check_violation_for_person(kp, phone_bboxes, person_bbox, person_id=0, avg_d
             eyes_facing_down  = True
             head_debug_reason = "Right ear above eye"
 
-    # FIX: include ears in face_visible check — side profiles with only ears
-    # visible should not be classified as facing_away
     face_visible      = any(x is not None for x in [nose, left_eye, right_eye, left_ear, right_ear])
     shoulders_visible = left_shoulder is not None or right_shoulder is not None
     facing_away       = shoulders_visible and not face_visible
@@ -284,8 +269,6 @@ def main():
 
     # --- Load models ---
     print("Loading YOLO pose model...")
-    # NOTE: this must be the native .pt checkpoint, not the OpenVINO export
-    # folder you were using before (yolo26l-pose_openvino_model_640).
     pose_model = YOLO('yolo26l-pose.pt')
     pose_model.to(DEVICE)
     POSE_DEVICE = DEVICE
@@ -297,7 +280,6 @@ def main():
         rfdetr_kwargs["pretrain_weights"] = RFDETR_CHECKPOINT
     phone_model = RFDETRLarge(**rfdetr_kwargs)
     if DEVICE == "cuda":
-        # Fuses conv/bn and switches to a faster inference-only graph.
         phone_model.optimize_for_inference()
     print(f"RF-DETR running on: {DEVICE.upper()}")
     print("Models loaded.")
@@ -399,10 +381,6 @@ def main():
         # 2. PHONE DETECTION  (RF-DETR, PyTorch/CUDA + instance tracker)
         # --------------------------------------------------------
         _t0 = time.time()
-        # RF-DETR's .predict() takes RGB and handles its own preprocessing/
-        # postprocessing internally, returning an sv.Detections object —
-        # this replaces the manual preprocess_frame/postprocess_openvino
-        # pipeline entirely.
         rgb_frame  = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         rf_results = phone_model.predict(rgb_frame, threshold=PHONE_CONF_THRESHOLD)
         phone_times.append(time.time() - _t0)
@@ -608,12 +586,6 @@ def main():
                 if 'WRIST' in label:
                     cv2.circle(annotated_frame, (x, y), dyn_tol, (255, 0, 255), 1)
 
-        # --------------------------------------------------------
-        # 5b. VIOLATION SNAPSHOTS — once per second, once per frame
-        #     (moved after drawing so the saved evidence frame actually
-        #      has the violator box/label burned in, and runs exactly
-        #      once per frame regardless of how many people are in it)
-        # --------------------------------------------------------
         if confirmed_violator_ids and frame_count % fps == 0:
             for pid in confirmed_violator_ids:
                 snap_path = os.path.join(
