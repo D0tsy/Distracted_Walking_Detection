@@ -114,7 +114,7 @@ Place the following files in the project directory before running:
 Run
 
 ```bash
-python main.py
+python Detection_Riz_CUDA.py
 ```
 
 ---
@@ -139,7 +139,7 @@ Red bounding box
 
 ## Configuration
 
-Detection behaviour can be adjusted directly in `main.py`.
+Detection behaviour can be adjusted directly in `Detection_Riz_CUDA.py`.
 
 Example parameters include
 
@@ -173,9 +173,3 @@ Example parameters include
 - Web dashboard
 - Performance optimization
 - Improved occlusion handling
-
----
-
-## License
-
-This project is intended for educational and research purposes.
