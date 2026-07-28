@@ -61,25 +61,6 @@ Snapshot Saved
 
 ---
 
-## Project Structure
-
-```
-Distracted_Walking_Detection/
-
-│── main.py
-│── requirements.txt
-│── README.md
-│── yolo26l-pose.pt
-│── vid1.mp4
-│── output.mp4
-│
-├── violations/
-│
-└── assets/
-```
-
----
-
 ## Installation
 
 Clone the repository
