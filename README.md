@@ -1,8 +1,6 @@
 # Distracted Walking Detection using RF-DETR and YOLO Pose
 
-<p align="center">
-  <img src="assets/demo.gif" width="850">
-</p>
+![Demo](assets/demo.gif)
 
 An AI-powered computer vision system that detects pedestrians using mobile phones while walking in real time.
 
