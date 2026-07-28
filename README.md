@@ -1,5 +1,9 @@
 # Distracted Walking Detection using RF-DETR and YOLO Pose
 
+<p align="center">
+  <img src="assets/demo.gif" width="850">
+</p>
+
 An AI-powered computer vision system that detects pedestrians using mobile phones while walking in real time.
 
 The system combines RF-DETR object detection, YOLO pose estimation, multi-person tracking, walking analysis, and temporal filtering to accurately identify distracted walking while reducing false positives.
